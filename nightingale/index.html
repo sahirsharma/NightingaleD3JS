@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Nightingale's Rose</title>
+		<link href='http://fonts.googleapis.com/css?family=Cabin:500' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" type="text/css" href="reset.css">
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script src="https://d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript" src="script.js"></script>
+	</head>
+	<body>	
+		
+		<script type="text/javascript">
+			var rose = Chart.rose(),
+				height = 600,
+				format = d3.time.format('%m/%Y'),
+				causes = ['disease', 'wounds', 'other'],
+				labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+
+			// Add sub-titles
+			d3.select('body').append('h3')
+				.attr('class', 'subtitle left')
+				.html('April 1854 - March 1855 (Rotated)');
+
+			d3.select('body').append('h3')
+				.attr('class', 'subtitle right')
+				.html('April 1854 - March 1855 (Original)');
+
+			// Load the JSON data
+			d3.json( 'data.json', function( data ) {
+		
+				var scale;
+				data.forEach( function(d) { 
+					d.date = format.parse(d.date);
+					d.label = labels[d.date.getMonth()];
+					
+					scale = 1000*12 / d.army_size;
+					d.disease = d.disease * scale;
+					d.wounds  = d.wounds  * scale;
+					d.other   = d.other   * scale;
+				} );
+
+				// Get the maximum value
+				var maxiValue = d3.max( data, function(d) {
+					return d3.max( [d.disease, d.wounds, d.other] );
+				});
+
+				// maximum radius
+				var maxRadii = Math.sqrt(maxiValue*12 / Math.PI);
+
+				// Divide the dataset in two:
+				var dset1 = data.slice(0,12);
+				
+				// Append a new figure
+				figure = d3.select( 'body' )
+					.append( 'figure' );
+
+				// Get the figure width:
+				wth = parseInt( figure.style( 'width' ), 10 );
+
+				// Update the chart generator settings:
+				rose.legend( causes )
+					.width( wth )
+					.height( height )
+					.delay( 0.5 )
+					.duration( 200 )
+					.domain( [0, maxRadii] )
+					.angle( function(d) { return d.date.getMonth(); } )
+					.area( function(d, i) { return [d.disease, d.wounds, d.other]; } );							
+
+				// Bind the data and generate a new chart:
+				figure.datum( dset1 )
+					.attr('class', 'chart figure1')
+					.call( rose );	
+
+				// Append a new figure
+				figure = d3.select( 'body' )
+					.append( 'figure' );
+
+				// Get the figure width
+				width = parseInt( figure.style( 'width' ), 10 );
+
+				rose.width( wth )
+					.delay( 1000 );
+
+				// Rotate the dataset
+				figure.datum( dset1 )
+					.attr('class', 'chart figure2')
+					.call( rose );	
+                d3.selectAll(".figure2").select(".canvas").attr("transform", "rotate(60)")
+				
+
+				// Create a legend:
+				Chart.legend( causes );
+				
+			});	
+
+		</script>
+	</body>
+</html>
